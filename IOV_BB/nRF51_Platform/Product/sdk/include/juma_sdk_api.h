@@ -88,5 +88,7 @@ int8_t I2C_bus_write(uint8_t dev_addr, uint8_t reg_addr, uint8_t * reg_data, uin
 int8_t I2C_bus_write_byte(uint8_t dev_addr, uint8_t reg_addr, uint8_t value);
 int8_t I2C_bus_read(uint8_t dev_addr, uint8_t reg_addr, uint8_t * reg_data, uint8_t cnt);
 uint8_t I2C_bus_read_byte(uint8_t dev_addr, uint8_t reg_addr);
+int8_t nrf_i2c_twi_tx(uint8_t addr, uint8_t *  p_data,uint8_t len, uint8_t no_stop);
+int8_t nrf_i2c_twi_rx(uint8_t addr, uint8_t *  p_data,uint8_t len);
 void nrf_delay_ms(uint32_t number_of_ms);
 #endif

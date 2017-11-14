@@ -63,5 +63,7 @@ const system_descriptor_t sys = {
 	I2C_bus_write_byte,
 	I2C_bus_read,
 	I2C_bus_read_byte,
+    nrf_i2c_twi_tx,
+    nrf_i2c_twi_rx,  
 	nrf_delay_ms,
 };

@@ -274,6 +274,16 @@ inline uint8_t I2C_bus_read_byte(uint8_t dev_addr, uint8_t reg_addr)
 {
 	return sys->I2C_bus_read_byte(dev_addr, reg_addr);
 }
+inline int8_t nrf_i2c_twi_tx(uint8_t addr, uint8_t *  p_data,uint8_t len, uint8_t no_stop)
+{
+    return sys->nrf_i2c_twi_tx(addr, p_data, len, no_stop);
+}
+
+inline int8_t nrf_i2c_twi_rx(uint8_t addr, uint8_t *  p_data,uint8_t len)
+{
+    return sys->nrf_i2c_twi_rx(addr, p_data, len);
+}
+
 inline void nrf_delay_ms(uint32_t number_of_ms)
 {
 	sys->nrf_delay_ms(number_of_ms);

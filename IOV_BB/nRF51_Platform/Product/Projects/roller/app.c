@@ -13,6 +13,9 @@
 */
 
 #include "juma_sdk_api.h"
+#include "HDC1080.h"
+#include "CCS811.h"
+
 
 #define BEEPER_CTL 9
 #define DEBUG_LED 10
@@ -33,13 +36,45 @@ void led_show(void)
     }
 }
 
+#define USE_HDC1080_MODE_1
 void on_ready()
 {
+    char chrStr[64];
+    uint16_t regval = 0;
+  
+    CCS811_Wake_Up();
     led_show();
-    SEGGER_RTT_WriteString(0, "on_ready\n");	
-    serial_setup(SERIAL_RX, SERIAL_TX, UART_BAUDRATE_Baud115200);
+//    SEGGER_RTT_WriteString(0, "on_ready\n");	
+    serial_setup(SERIAL_RX, SERIAL_TX, UART_BAUDRATE_Baud115200);    
+    sprintf(chrStr, "on_ready\n ");    
+    serial_send((uint8_t *)chrStr, strlen(chrStr)); 
+    
+
+    
+    regval = HDC1080_Read_DeviceID();
+    sprintf(chrStr, "HDC1080_Read_DeviceID = 0x%x\n ", regval);
+    serial_send((uint8_t *)chrStr, strlen(chrStr));
+    regval = HDC1080_Read_ManufacturerID();
+    sprintf(chrStr, "HDC1080_Read_ManufacturerID = 0x%x\n ", regval); 
+    serial_send((uint8_t *)chrStr, strlen(chrStr));    
+
+    HDC1080_Soft_Reset(); 
+
+#ifdef USE_HDC1080_MODE_1
+    HDC1080_Set_MODE(1);
+#endif /*USE_HDC1080_MODE_1*/
+
+    regval = HDC1080_Read_MODE();
+    sprintf(chrStr, "HDC1080_Read_MODE = 0x%x\n\n\n ", regval);   
+    serial_send((uint8_t *)chrStr, strlen(chrStr));
+
+    regval = CCS811_Read_Byte(CCS811_HW_ID);
+    sprintf(chrStr, "CCS811_HW_ID = 0x%x\n ", regval);  
+    serial_send((uint8_t *)chrStr, strlen(chrStr));
+  
+    
     timer_init(9, TIMER_PERIODIC);
-    timer_start(2000);//2000ms is the max value
+    timer_start(32000);//2000ms is the max value
     ble_device_set_name("ROLLER_ECHO_DEMO");
     ble_device_start_advertising();	 
     
@@ -49,16 +84,37 @@ char buffer[64];
 
 void timer_on_fired(void)
 {	
-  uint16_t ManufacturerID = HDC1080_Read_ManufacturerID();
+    
+#ifdef USE_HDC1080_MODE_1
+    uint16_t temp,humi;
+    HDC1080_Read_Temperature_and_Humidity(&temp, &humi);
+    sprintf(buffer, "HDC1080_Read_Temperature = %d , HDC1080_Read_Humidity = %d%%\n ", temp, humi);  
+    serial_send((uint8_t *)buffer, strlen(buffer)); 
+#else /*USE_HDC1080_MODE_1*/
+    uint16_t data = 0;
+    data = HDC1080_Read_Temperature();
+    sprintf(buffer, "HDC1080_Read_Temperature = %d\n ", data);  
+    serial_send((uint8_t *)buffer, strlen(buffer));     
 
-  sprintf(buffer, "ManufacturerID=%x",ManufacturerID);
-  SEGGER_RTT_WriteString(0, "timer_on_fired\n");	
+    
+    data = HDC1080_Read_Humidity();
+    sprintf(buffer, "HDC1080_Read_Humidity = %d%%\n ", data);  
+    serial_send((uint8_t *)buffer, strlen(buffer));      
+#endif     /*USE_HDC1080_MODE_1*/
+    uint8_t ccs = 0;
+    
+    ccs = CCS811_Read_Byte(CCS811_STATUS);
+    sprintf(buffer, "CCS811_STATUS = 0x%x\n ", ccs);  
+    serial_send((uint8_t *)buffer, strlen(buffer));    
+
+
+
+//  SEGGER_RTT_WriteString(0, "timer_on_fired\n");	
 
   if(0 != ble_device_is_connected()){
-  ble_device_send(1, strlen("hello\r\n"),"hello\r\n");
+    ble_device_send(1, strlen("hello\r\n"),(uint8_t *)"hello\r\n");
   }
 
-  serial_send( buffer, strlen(buffer) );  
   led_show();
 }
 void serial_on_data(uint8_t data)
