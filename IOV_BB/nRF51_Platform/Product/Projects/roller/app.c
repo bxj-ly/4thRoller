@@ -15,6 +15,7 @@
 #include "juma_sdk_api.h"
 #include "HDC1080.h"
 #include "CCS811.h"
+#include "MC24AA02.h"
 
 
 #define BEEPER_CTL 9
@@ -71,8 +72,29 @@ void on_ready()
     regval = CCS811_Read_Byte(CCS811_HW_ID);
     sprintf(chrStr, "CCS811_HW_ID = 0x%x\n ", regval);  
     serial_send((uint8_t *)chrStr, strlen(chrStr));
-  
     
+    uint8_t eui64[8];
+    uint8_t i = 0;
+    int len = 0;
+    len += sprintf(chrStr + len, "MC24AAXXXE64_EUI64 = ");
+    for(i=0; i < 8; i ++){
+        eui64[i] = 0;
+    }    
+    MC24AA02_Read_Sequential(MC24AAXXXE64_EUI64_Addr, eui64, 8);
+    for(i=0; i < 8; i ++){
+ //       eui64[i] = MC24AA02_Random_Read(MC24AAXXXE64_EUI64_Addr+i);
+        len += sprintf(chrStr + len, "0x%2x ", eui64[i]);
+    }
+    len += sprintf(chrStr + len, "\n");
+    serial_send((uint8_t *)chrStr, strlen(chrStr));
+    
+    MC24AA02_Write_Page_t mc2d;
+    mc2d.addr = 0x00;
+    for(i=0; i < 8; i ++){
+        mc2d.data[i] = 0x41 + i;
+    }    
+    MC24AA02_Write_Page(mc2d);
+  
     timer_init(9, TIMER_PERIODIC);
     timer_start(32000);//2000ms is the max value
     ble_device_set_name("ROLLER_ECHO_DEMO");
@@ -81,7 +103,9 @@ void on_ready()
     play_sound(BEEPER_CTL);
 }
 char buffer[64];
-
+int splen = 0;
+uint8_t mc24buf[9];
+uint8_t tcount = 0;
 void timer_on_fired(void)
 {	
     
@@ -108,6 +132,16 @@ void timer_on_fired(void)
     serial_send((uint8_t *)buffer, strlen(buffer));    
 
 
+    
+    for(tcount=0;tcount<9;tcount++){
+        mc24buf[tcount] = 0;
+    }
+    splen = 0;
+    splen += sprintf(buffer + splen, "MC24AA02_Read_Sequential = ");
+    MC24AA02_Read_Sequential(0x00, mc24buf , 8);
+
+    splen += sprintf(buffer + splen, "%s\n",mc24buf);
+    serial_send((uint8_t *)buffer, strlen(buffer));  
 
 //  SEGGER_RTT_WriteString(0, "timer_on_fired\n");	
 

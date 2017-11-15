@@ -427,6 +427,11 @@
               <FileType>1</FileType>
               <FilePath>..\CCS811.c</FilePath>
             </File>
+            <File>
+              <FileName>MC24AA02.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\MC24AA02.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
