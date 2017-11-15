@@ -10,6 +10,7 @@ sys.opntrace(true,1)
 require"rollerPinCfg" 
 require"rollerLED"
 --require"rollerGPS"
+require"rollerBMP280"
 --require"rollerI2C"
 require"rollerMsg"
 --require"rollerUart"

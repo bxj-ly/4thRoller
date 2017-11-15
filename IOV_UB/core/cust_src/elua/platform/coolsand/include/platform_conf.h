@@ -108,6 +108,7 @@
     _ROM( AUXLIB_UART, luaopen_uart, uart_map ) \
     _ROM( AUXLIB_SPI, luaopen_spi, spi_map ) \
     _ROM( AUXLIB_I2C, luaopen_i2c, i2c_map ) \
+    _ROM( AUXLIB_BMP280, luaopen_bmp280, bmp280_map ) \
     _ROM( AUXLIB_RTOS, luaopen_rtos, rtos_map ) \
     DISP_LIB_LINE \
     _ROM( AUXLIB_PMD, luaopen_pmd, pmd_map ) \

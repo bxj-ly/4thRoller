@@ -509,4 +509,9 @@ int platform_remove_dir(char *pDir, int len)
         return 0;
     }
 }
+
+void platform_delay_ms(int ms)
+{
+    IVTBL(sleep)((ms));
+}
 /*end\NEW\zhutianhua\2017.9.27 19:37\增加make_dir接口*/

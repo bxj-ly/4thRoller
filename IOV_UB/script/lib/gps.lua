@@ -898,7 +898,7 @@ function init(ionum,dir,edge,period,id,baud,databits,parity,stopbits,apgspwronup
 
 	gps.period = 1000
 	gps.uartid = 2
-	gps.baud = 115200
+	gps.baud = 9600
 	gps.databits = 8
 	gps.parity = uart.PAR_NONE
 	gps.stopbits = uart.STOP_1
@@ -1272,3 +1272,5 @@ function isactive(mode,para)
 end
 
 sys.regapp(gpsstatind,GPS_STATE_IND)
+--为GPS提供32K时钟
+rtos.sys32k_clk_out(1)

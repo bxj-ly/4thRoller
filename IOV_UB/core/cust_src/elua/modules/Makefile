@@ -59,6 +59,7 @@ IS_TOP_LEVEL := no
 ## ------------------------------------ ##
 LOCAL_ADD_INCLUDE := \
                     cust_src/elua/lua/src \
+                    cust_src/elua/modules/include \
                     
 ## ------------------------------------- ##
 ##	List all your sources here           ##

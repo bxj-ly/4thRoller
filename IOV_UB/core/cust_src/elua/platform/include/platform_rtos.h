@@ -182,4 +182,5 @@ void platform_poweron_try(void);
 /*begin\NEW\zhutianhua\2017.9.6 22:35\增加get_fs_free_size接口*/
 int platform_fs_get_free_size(void);
 /*end\NEW\zhutianhua\2017.9.6 22:35\增加get_fs_free_size接口*/
+void platform_delay_ms(int ms);
 #endif/*_PLATFORM_RTOS_H_*/

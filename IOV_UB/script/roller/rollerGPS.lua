@@ -1,7 +1,7 @@
 module(...,package.seeall)
 
 require"gps"
-require"agps"
+--require"agps"
 
 local function print(...)
 	_G.print("rollerGPS",...)
