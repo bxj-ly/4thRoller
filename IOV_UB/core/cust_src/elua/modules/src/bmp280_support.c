@@ -53,16 +53,6 @@
 /* Includes*/
 /*---------------------------------------------------------------------------*/
 #include "bmp280.h"
-#include "lua.h"
-#include "lualib.h"
-#include "lauxlib.h"
-#include "platform.h"
-#include "platform_i2c.h"
-#include "auxmods.h"
-#include "lrotable.h"
-#include <string.h>
-#include <stdlib.h>
-#include <ctype.h>
 
 #define BMP280_API
 /*Enable the macro BMP280_API to use this support file */
@@ -179,7 +169,6 @@ s32 bmp280_setting(void)
  *	Chip id
 *-------------------------------------------------------------------------*/
 	com_rslt = bmp280_init(&bmp280);
-  printf(" bmp280_init com_rslt=0x%X\n", com_rslt);
 
 	/*	For initialization it is required to set the mode of
 	 *	the sensor as "NORMAL"
@@ -187,7 +176,6 @@ s32 bmp280_setting(void)
 	 *	by using the below API able to set the power mode as NORMAL*/
 	/* Set the power mode as NORMAL*/
 	com_rslt += bmp280_set_power_mode(BMP280_NORMAL_MODE);
-  printf(" bmp280_set_power_mode com_rslt=0x%X\n", com_rslt);
 	/*	For reading the pressure and temperature data it is required to
 	 *	set the work mode
 	 *	The measurement period in the Normal mode is depends on the setting of
@@ -202,7 +190,6 @@ s32 bmp280_setting(void)
 	 */
 	/* The oversampling settings are set by using the following API*/
 	com_rslt += bmp280_set_work_mode(BMP280_ULTRA_LOW_POWER_MODE);
-  printf(" bmp280_set_work_mode com_rslt=0x%X\n", com_rslt);
 /*------------------------------------------------------------------------*
 ************************* START GET and SET FUNCTIONS DATA ****************
 *---------------------------------------------------------------------------*/
@@ -215,12 +202,10 @@ s32 bmp280_setting(void)
 	 *	Usage Hint : BMP280_set_standbydur(BMP280_STANDBYTIME_125_MS)*/
 
 	com_rslt += bmp280_set_standby_durn(BMP280_STANDBY_TIME_1_MS);
-  printf(" bmp280_set_standby_durn com_rslt=0x%X\n", com_rslt);
 
 
 	/* This API used to read back the written value of standby time*/
 	com_rslt += bmp280_get_standby_durn(&v_standby_time_u8);
-  printf(" bmp280_get_standby_durn com_rslt=0x%X\n", com_rslt);
 /*-----------------------------------------------------------------*
 ************************* END GET and SET FUNCTIONS ****************
 *------------------------------------------------------------------*/
@@ -491,62 +476,5 @@ void  BMP280_delay_msek(u32 msek)
 	/*Here you can write your own delay routine*/
   platform_delay_ms(msek);
 }
-
-static int l_bmp280_setting( lua_State *L )
-{
-  int xxx = luaL_checkinteger(L, 1);
-
-  printf("l_bmp280_setting\n");
-  lua_pushinteger(L, bmp280_setting());
-  return 1; 
-}
-
-
-static int l_bmp280_read_pressure( lua_State *L )
-{
-   /* The variable used to read real temperature*/
-   s32 v_actual_temp_combined_s32 = BMP280_INIT_VALUE;
-   /* The variable used to read real pressure*/
-   u32 v_actual_press_combined_u32 = BMP280_INIT_VALUE;
-   int xxx = luaL_checkinteger(L, 1);
-
-   /* API is used to read the true temperature and pressure*/
-   bmp280_read_pressure_temperature(&v_actual_press_combined_u32,&v_actual_temp_combined_s32);
-   lua_pushinteger( L, v_actual_press_combined_u32);
-   return 1;
-}
-
-static int l_bmp280_read_temperature( lua_State *L )
-{
-   /* The variable used to read real temperature*/
-   s32 v_actual_temp_combined_s32 = BMP280_INIT_VALUE;
-   /* The variable used to read real pressure*/
-   u32 v_actual_press_combined_u32 = BMP280_INIT_VALUE;
-   int xxx = luaL_checkinteger(L, 1);
-
-   /* API is used to read the true temperature and pressure*/
-   bmp280_read_pressure_temperature(&v_actual_press_combined_u32,&v_actual_temp_combined_s32);
-   lua_pushinteger( L, v_actual_temp_combined_s32);
-   return 1;
-}
-
-#define MIN_OPT_LEVEL 2
-#include "lrodefs.h"
-
-const LUA_REG_TYPE bmp280_map[] =
-{
-    { LSTRKEY( "setting" ),  LFUNCVAL( l_bmp280_setting ) },
-    { LSTRKEY( "pressure" ),  LFUNCVAL( l_bmp280_read_pressure ) },
-    { LSTRKEY( "temperature" ),  LFUNCVAL( l_bmp280_read_temperature ) },
-    { LNILKEY, LNILVAL }
-};
-
-int luaopen_bmp280( lua_State *L )
-{
-    luaL_register( L, AUXLIB_BMP280, bmp280_map );
-
-    return 1;
-}
-
 
 #endif

@@ -8,16 +8,21 @@ local function print(...)
 end
 
 local function init()
-	local i2cslaveaddr = 0x0E
-	--i2cslaveaddr is 7bit address
-	if i2c.setup(i2cid,i2c.SLOW,i2cslaveaddr) ~= i2c.SLOW then
-		print("init fail")
-		return
-	end
-	local id=i2c.read(i2cid,0xD0,1)
-	--print("init",string.format("%02X"),common.binstohexs(id))
+    i2c.mpu6050(1)
+    local tab6050=i2c.mpu6050(2)
+    -- show key and value  
+    for k, v in pairs(tab6050) do  
+        print(string.format("%s : %s",tostring(k), tostring(v)))  
+    end
+    i2c.lps25hb(1)
+    print("LSP25HB Pressure:", string.format("%d",i2c.lps25hb(2)))
+    print("LSP25HB Temperature:", string.format("%d",i2c.lps25hb(3)))
+
+    i2c.bmp280(1)
+    local pressure, temperature=i2c.bmp280(2)
+    print(string.format("BMP280 Pressure:%d",pressure))
+    print(string.format("BMP280 Temperature:%d",temperature))
+    sys.timer_start(init,2000)
 end
 
 init()
---Close I2C channel after 5 s
-sys.timer_start(i2c.close,5000,i2cid)

@@ -120,9 +120,6 @@ LUALIB_API int ( luaopen_image )( lua_State *L );
 #define AUXLIB_QRENCODE      "qrencode"
 LUALIB_API int ( luaopen_qr_encode )( lua_State *L );
 
-#define AUXLIB_BMP280      "bmp280"
-LUALIB_API int ( luaopen_bmp280 )( lua_State *L );
-
 // Helper macros
 #define MOD_CHECK_ID( mod, id )\
   if( !platform_ ## mod ## _exists( id ) )\

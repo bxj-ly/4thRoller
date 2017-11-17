@@ -172,37 +172,37 @@ static int i2c_read( lua_State *L )
     return 1;
 }
 
+extern s32 bmp280_setting(void);
 static int bmp280_handle( lua_State *L )
 {
   /* The variable used to read real temperature*/
   s32 v_actual_temp_combined_s32 = BMP280_INIT_VALUE;
   /* The variable used to read real pressure*/
   u32 v_actual_press_combined_u32 = BMP280_INIT_VALUE;
-  
+  s32 ret;
+ 
   unsigned handleType = luaL_checkinteger( L, 1 );
   switch(handleType)
   {
   case 1:
-    bmp280_setting(); 
-    lua_pushinteger( L, 0); 
+    ret = bmp280_setting(); 
+    lua_pushinteger(L, ret);
     break;
+  
   case 2:
     /* API is used to read the true temperature and pressure*/
     bmp280_read_pressure_temperature(&v_actual_press_combined_u32,&v_actual_temp_combined_s32);
+    
     lua_pushinteger( L, v_actual_press_combined_u32); 
-    break;
-  case 3:
-    /* API is used to read the true temperature and pressure*/
-    bmp280_read_pressure_temperature(&v_actual_press_combined_u32,&v_actual_temp_combined_s32);
     lua_pushinteger( L, v_actual_temp_combined_s32); 
-    break;
+    return 2;
+
   default:
-    lua_pushinteger( L, 0); 
+    lua_pushinteger(L, 0);
     break;
   }
   
   return 1;
-
 }
 
 static int mpu6050_handle( lua_State *L )
@@ -215,25 +215,42 @@ static int mpu6050_handle( lua_State *L )
   case 1:
     MPU6050_I2C_Init(); 
     MPU6050_Initialize();
-    lua_pushinteger( L, 0); 
+    lua_pushinteger(L, 0);
     break;
+    
   case 2:
     MPU6050_GetRawAccelGyro(AccelGyro);
-    printf("Y_Y %d %d %d, %d %d %d\n",AccelGyro[0],AccelGyro[1],AccelGyro[2],AccelGyro[3],AccelGyro[4],AccelGyro[5]);
+    lua_newtable(L);
+    lua_pushstring(L, "MPU6050 Accel.x");
     lua_pushinteger( L, AccelGyro[0]); 
+    lua_settable(L, -3);
+
+    lua_pushstring(L, "MPU6050 Accel.y");
     lua_pushinteger( L, AccelGyro[1]); 
+    lua_settable(L, -3);
+
+    lua_pushstring(L, "MPU6050 Accel.z");
     lua_pushinteger( L, AccelGyro[2]); 
+    lua_settable(L, -3); 
+    
+    lua_pushstring(L, "MPU6050 Gyro.x");
     lua_pushinteger( L, AccelGyro[3]); 
+    lua_settable(L, -3);
+
+    lua_pushstring(L, "MPU6050 Gyro.y");
     lua_pushinteger( L, AccelGyro[4]); 
+    lua_settable(L, -3);
+
+    lua_pushstring(L, "MPU6050 Gyro.z");
     lua_pushinteger( L, AccelGyro[5]); 
+    lua_settable(L, -3);  
     break;
+    
   default:
-    lua_pushinteger( L, 0); 
     break;
   }
   
   return 1;
-
 }
 
 static int lps25hb_handle( lua_State *L )
@@ -249,20 +266,20 @@ static int lps25hb_handle( lua_State *L )
     LPS25HB_Activate();
     LPS25HB_Set_AvgP(LPS25HB_AVGP_32);
     LPS25HB_Set_AvgT(LPS25HB_AVGT_16);
-    lua_pushinteger( L, 0); 
+    lua_pushinteger(L, 0);
     break;
   case 2:
     LPS25HB_Get_Pressure(&Pressure);
-    printf("Pressure: %d\n",Pressure);
+    //printf("Pressure:%d\n",Pressure);
     lua_pushinteger( L, Pressure); 
     break;
   case 3:
     LPS25HB_Get_Temperature(&Temperature);
-    printf("Temperature: %d\n",Temperature);
+    //printf("Temperature:%d\n",Temperature);
     lua_pushinteger( L, Temperature); 
     break;   
   default:
-    lua_pushinteger( L, 0); 
+    lua_pushinteger(L, 0);
     break;
   }
   
