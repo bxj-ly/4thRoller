@@ -81,7 +81,13 @@ void LPS25HB_HalDeInit(void)
 // the user must redefine the proper LPS25HB_ReadReg
 LPS25HB_Error_et LPS25HB_ReadReg(const uint8_t RegAddr, uint32_t NumByteToRead, uint8_t* Data)
 {
-  platform_i2c_recv_data(2, LPS25HB_ADDRESS, &RegAddr, Data, NumByteToRead); 
+  int ret = -1;
+  ret = platform_i2c_recv_data(2, LPS25HB_ADDRESS, &RegAddr, Data, NumByteToRead); 
+  //printf("LPS25HB_ReadReg RegAddr=%d, NumByteToRead=%d ret=%d\n",RegAddr,NumByteToRead,ret);
+  //for(int i=0;i<NumByteToRead;i++)
+  //  printf("Data[%d]=0x%x ", i, Data[i]);
+  //printf("\n");
+  return LPS25HB_OK;
 }
 
 /**
@@ -94,7 +100,10 @@ LPS25HB_Error_et LPS25HB_ReadReg(const uint8_t RegAddr, uint32_t NumByteToRead, 
 // the user must redefine the proper LPS25HB_WriteReg
 LPS25HB_Error_et LPS25HB_WriteReg(const uint8_t RegAddr, uint32_t NumByteToWrite, uint8_t* Data)  
 {
-  platform_i2c_send_data(2, LPS25HB_ADDRESS, &RegAddr, Data, NumByteToWrite);
+  int ret = -1;
+  ret = platform_i2c_send_data(2, LPS25HB_ADDRESS, &RegAddr, Data, NumByteToWrite);
+  //printf("LPS25HB_WriteReg RegAddr=%d, NumByteToWrite=%d ret=%d\n",RegAddr,NumByteToWrite,ret);
+  return LPS25HB_OK;
 }
 
 /**
@@ -878,9 +887,18 @@ LPS25HB_Error_et LPS25HB_Get_RawPressure(int32_t *raw_press)
   uint8_t buffer[3];
   uint32_t tmp = 0;  
 	
-  if(LPS25HB_ReadReg(LPS25HB_PRESS_OUT_XL_REG, 3, buffer))
+  //if(LPS25HB_ReadReg(LPS25HB_PRESS_OUT_XL_REG, 3, buffer))
+  //    return LPS25HB_ERROR;
+
+  if(LPS25HB_ReadReg(LPS25HB_PRESS_OUT_XL_REG, 1, &buffer[0]))
       return LPS25HB_ERROR;
-  
+
+  if(LPS25HB_ReadReg(LPS25HB_PRESS_OUT_XL_REG+1, 1, &buffer[1]))
+      return LPS25HB_ERROR;
+
+  if(LPS25HB_ReadReg(LPS25HB_PRESS_OUT_XL_REG+2, 1, &buffer[2]))
+      return LPS25HB_ERROR;  
+
   /* Build the raw data */
   for(uint8_t i=0; i<3; i++)
     tmp |= (((uint32_t)buffer[i]) << (8*i));
@@ -925,8 +943,15 @@ LPS25HB_Error_et LPS25HB_Get_RawTemperature(int16_t* raw_data)
   uint8_t buffer[2];
   uint16_t tmp;
 	  
-  if(LPS25HB_ReadReg(LPS25HB_TEMP_OUT_L_REG, 2, buffer))
+  //if(LPS25HB_ReadReg(LPS25HB_TEMP_OUT_L_REG, 2, buffer))
+  //    return LPS25HB_ERROR;
+
+  if(LPS25HB_ReadReg(LPS25HB_TEMP_OUT_L_REG, 1, &buffer[0]))
       return LPS25HB_ERROR;
+
+  if(LPS25HB_ReadReg(LPS25HB_TEMP_OUT_L_REG+1, 1, &buffer[1]))
+      return LPS25HB_ERROR;
+
 	
   /* Build the raw tmp */
   tmp = (((uint16_t)buffer[1]) << 8) + (uint16_t)buffer[0];

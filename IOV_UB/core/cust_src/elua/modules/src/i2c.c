@@ -255,26 +255,32 @@ static int mpu6050_handle( lua_State *L )
 
 static int lps25hb_handle( lua_State *L )
 {
-  int32_t Pressure;
-  int16_t Temperature;
+  int32_t Pressure = 0;
+  int16_t Temperature = 0;
+  //uint8_t ID = 0;
 
   unsigned handleType = luaL_checkinteger( L, 1 );
   switch(handleType)
   {
   case 1:
     LPS25HB_HalInit(); 
-    LPS25HB_Activate();
-    LPS25HB_Set_AvgP(LPS25HB_AVGP_32);
-    LPS25HB_Set_AvgT(LPS25HB_AVGT_16);
+    
+    //if(LPS25HB_OK != LPS25HB_Get_DeviceID(&ID)) { lua_pushinteger(L, -1); return 1;}
+    if(LPS25HB_OK != LPS25HB_DeActivate()) { lua_pushinteger(L, -1); return 1;}
+    if(LPS25HB_OK != LPS25HB_Set_FifoSampleSize(LPS25HB_FIFO_SAMPLE_32)) { lua_pushinteger(L, -1); return 1;}
+    if(LPS25HB_OK != LPS25HB_Set_Odr(LPS25HB_ODR_25HZ)) { lua_pushinteger(L, -1); return 1;}
+    if(LPS25HB_OK != LPS25HB_Set_AvgP(LPS25HB_AVGP_512)) { lua_pushinteger(L, -1); return 1;}
+    if(LPS25HB_OK != LPS25HB_Set_AvgT(LPS25HB_AVGT_64)) { lua_pushinteger(L, -1); return 1;}
+    if(LPS25HB_OK != LPS25HB_Activate()) { lua_pushinteger(L, -1); return 1;}
     lua_pushinteger(L, 0);
     break;
   case 2:
-    LPS25HB_Get_Pressure(&Pressure);
+    if(LPS25HB_OK != LPS25HB_Get_Pressure(&Pressure)) { lua_pushinteger(L, -1); return 1;}
     //printf("Pressure:%d\n",Pressure);
     lua_pushinteger( L, Pressure); 
     break;
   case 3:
-    LPS25HB_Get_Temperature(&Temperature);
+    if(LPS25HB_OK != LPS25HB_Get_Temperature(&Temperature)) { lua_pushinteger(L, -1); return 1;}
     //printf("Temperature:%d\n",Temperature);
     lua_pushinteger( L, Temperature); 
     break;   
