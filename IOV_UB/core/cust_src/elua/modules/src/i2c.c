@@ -220,6 +220,7 @@ static int mpu6050_handle( lua_State *L )
     
   case 2:
     MPU6050_GetRawAccelGyro(AccelGyro);
+#if 0    
     lua_newtable(L);
     lua_pushstring(L, "MPU6050 Accel.x");
     lua_pushinteger( L, AccelGyro[0]); 
@@ -244,6 +245,15 @@ static int mpu6050_handle( lua_State *L )
     lua_pushstring(L, "MPU6050 Gyro.z");
     lua_pushinteger( L, AccelGyro[5]); 
     lua_settable(L, -3);  
+#else
+lua_pushinteger( L, AccelGyro[0]); 
+lua_pushinteger( L, AccelGyro[1]); 
+lua_pushinteger( L, AccelGyro[2]); 
+lua_pushinteger( L, AccelGyro[3]); 
+lua_pushinteger( L, AccelGyro[4]); 
+lua_pushinteger( L, AccelGyro[5]); 
+return 6;
+#endif
     break;
     
   default:

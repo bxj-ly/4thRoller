@@ -12,16 +12,59 @@ local function print(...)
 	_G.print("rollerMsg",...)
 end
 
-local qos0cnt,qos1cnt = 1,1
+local qos1cnt = 1
 
-local function pubqos0testsndcb(usertag,result)
-	print("pubqos0testsndcb",usertag,result)
-	sys.timer_start(pubqos0test,10000)
-	qos0cnt = qos0cnt+1
+local function pubPressureSendCallback(usertag,result)
+	print("pubPressureSendCallback",usertag,result)
+	sys.timer_start(pubPressure,10000)
 end
 
-function pubqos0test()
-	mqttclient:publish("/qos0topic","qos0data",0,pubqos0testsndcb,"publish0test_"..qos0cnt)
+function pubPressure()
+	i2c.lps25hb(1)
+	mqttclient:publish("/roller","LSP25HB Pressure: "..i2c.lps25hb(2),0,pubPressureSendCallback,"LSP25HB Pressure:")
+	i2c.bmp280(1)
+	local pressure, temperature=i2c.bmp280(2)
+	mqttclient:publish("/roller","BMP280 Pressure: "..pressure,0,pubPressureSendCallback,"BMP280 Pressure:")
+end
+
+local function pubTemperatureSendCallback(usertag,result)
+	print("pubTemperatureSendCallback",usertag,result)
+	sys.timer_start(pubTemperature,10000)
+end
+
+function pubTemperature()
+	i2c.lps25hb(1)
+	mqttclient:publish("/roller","LSP25HB Temperature: "..i2c.lps25hb(3),0,pubTemperatureSendCallback,"LSP25HB Temperature:")
+	i2c.bmp280(1)
+	local pressure, temperature=i2c.bmp280(2)
+	mqttclient:publish("/roller","BMP280 Temperature: "..temperature,0,pubTemperatureSendCallback,"BMP280 Temperature:")
+end
+
+local function pubAccelGyroSendCallback(usertag,result)
+	print("pubAccelGyroSendCallback",usertag,result)
+	sys.timer_start(pubAccelGyro,10000)
+end
+
+function pubAccelGyro()
+	i2c.mpu6050(1)
+    --local tab6050=i2c.mpu6050(2)
+    -- show key and value  
+    --for k, v in pairs(tab6050) do  
+    --    print(string.format("%s : %s",tostring(k), tostring(v)))  
+    --end
+    local AccelX,AccelY,AccelZ,GyroX,GyroY,GyroZ=i2c.mpu6050(2)
+	mqttclient:publish("/roller","MPU6050： AX("..AccelX..") AY("..AccelY..") AZ("..AccelZ..") GX("..GyroX..") GY("..GyroY..") GZ-"..GyroZ..")",0,pubAccelGyroSendCallback,"MPU6050:")
+	i2c.bmp280(1)
+end
+
+local function pubPositionSendCallback(usertag,result)
+	print("pubPositionSendCallback",usertag,result)
+	sys.timer_start(pubPosition,10000)
+end
+
+function pubPosition()
+	--gps.isfix(),gps.getgpslocation(),gps.getgpsspd(),gps.getgpscog(),gps.getaltitude()
+	--mqttclient:publish("/roller","Position",0,pubPositionSendCallback,gps.getgpslocation())
 end
 
 local function pubqos1testackcb(usertag,result)
@@ -69,7 +112,9 @@ local function connectedcb()
 	--Register publish receiver
 	mqttclient:regevtcb({MESSAGE=rcvmessagecb})
 	--publish a qos0 msg
-	pubqos0test()
+	pubPressure()
+	pubTemperature()
+	pubAccelGyro()
 	--publish a qos1 msg
 	pubqos1test()
 	--Disconnect after 20 s
