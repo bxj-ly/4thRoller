@@ -24,8 +24,8 @@ local testidx = 1
 local function gps_open(typ)
   if typ==1 then
     gps.open(gps.DEFAULT,{cause="TEST1",cb=test1cb})
-    gps.open(gps.TIMERORSUC,{cause="TEST2",val=10,cb=test2cb})
-    gps.open(gps.TIMER,{cause="TEST3",val=300,cb=test3cb})
+    --gps.open(gps.TIMERORSUC,{cause="TEST2",val=10,cb=test2cb})
+    --gps.open(gps.TIMER,{cause="TEST3",val=300,cb=test3cb})
 
   elseif typ==2 then
     gps.open(gps.DEFAULT,{cause="TEST1",cb=test1cb})

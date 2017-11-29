@@ -20,10 +20,19 @@
 
 #define BEEPER_CTL 9
 #define DEBUG_LED 10
-#define SERIAL_RX 29
-#define SERIAL_TX 28
+#define SERIAL_RX 28
+#define SERIAL_TX 29
+#define GPRS_PWRKEY 13
 
 uint8_t is_led_on = 0;
+
+static void bb_send_data(char *buffer)
+{
+  serial_send((uint8_t *)buffer, strlen(buffer)); 
+  if(0 != ble_device_is_connected()){
+    ble_device_send(1, strlen(buffer),(uint8_t *)buffer);
+  } 
+}
 void led_show(void)
 {
     gpio_setup(DEBUG_LED, GPIO_OUTPUT);
@@ -40,37 +49,36 @@ void led_show(void)
 #define USE_HDC1080_MODE_1
 void on_ready()
 {
-    char chrStr[64];
+    char chrStr[4];
+#if 0    
     uint16_t regval = 0;
+#endif
+    led_show();
   
     CCS811_Wake_Up();
-    led_show();
-//    SEGGER_RTT_WriteString(0, "on_ready\n");	
     serial_setup(SERIAL_RX, SERIAL_TX, UART_BAUDRATE_Baud115200);    
-    sprintf(chrStr, "on_ready\n ");    
-    serial_send((uint8_t *)chrStr, strlen(chrStr)); 
     
-
+#if 0
     
     regval = HDC1080_Read_DeviceID();
-    sprintf(chrStr, "HDC1080_Read_DeviceID = 0x%x\n ", regval);
+    sprintf(chrStr, "HDC1080_Read_DeviceID = 0x%x\r\n ", regval);
     serial_send((uint8_t *)chrStr, strlen(chrStr));
     regval = HDC1080_Read_ManufacturerID();
-    sprintf(chrStr, "HDC1080_Read_ManufacturerID = 0x%x\n ", regval); 
+    sprintf(chrStr, "HDC1080_Read_ManufacturerID = 0x%x\r\n ", regval); 
     serial_send((uint8_t *)chrStr, strlen(chrStr));    
-
+#endif
     HDC1080_Soft_Reset(); 
 
 #ifdef USE_HDC1080_MODE_1
     HDC1080_Set_MODE(1);
 #endif /*USE_HDC1080_MODE_1*/
-
+#if 0
     regval = HDC1080_Read_MODE();
-    sprintf(chrStr, "HDC1080_Read_MODE = 0x%x\n\n\n ", regval);   
+    sprintf(chrStr, "HDC1080_Read_MODE = 0x%x\r\n\r\n\r\n ", regval);   
     serial_send((uint8_t *)chrStr, strlen(chrStr));
 
     regval = CCS811_Read_Byte(CCS811_HW_ID);
-    sprintf(chrStr, "CCS811_HW_ID = 0x%x\n ", regval);  
+    sprintf(chrStr, "CCS811_HW_ID = 0x%x\r\n ", regval);  
     serial_send((uint8_t *)chrStr, strlen(chrStr));
     
     uint8_t eui64[8];
@@ -85,7 +93,7 @@ void on_ready()
  //       eui64[i] = MC24AA02_Random_Read(MC24AAXXXE64_EUI64_Addr+i);
         len += sprintf(chrStr + len, "0x%2x ", eui64[i]);
     }
-    len += sprintf(chrStr + len, "\n");
+    len += sprintf(chrStr + len, "\r\n");
     serial_send((uint8_t *)chrStr, strlen(chrStr));
     
     MC24AA02_Write_Page_t mc2d;
@@ -94,66 +102,133 @@ void on_ready()
         mc2d.data[i] = 0x41 + i;
     }    
     MC24AA02_Write_Page(mc2d);
-  
+#endif  
     timer_init(9, TIMER_PERIODIC);
     timer_start(32000);//2000ms is the max value
-    ble_device_set_name("ROLLER_ECHO_DEMO");
+    ble_device_set_name("ROLLER");
     ble_device_start_advertising();	 
+
+    gpio_setup(GPRS_PWRKEY, GPIO_OUTPUT);
+    gpio_write(GPRS_PWRKEY, 1);
     
-    play_sound(BEEPER_CTL);
+    //play_sound(BEEPER_CTL);   
 }
 char buffer[64];
 int splen = 0;
 uint8_t mc24buf[9];
 uint8_t tcount = 0;
+uint8_t timer_cnt = 0;
 void timer_on_fired(void)
 {	
-    
+    led_show();
+
+    if(timer_cnt < 10) 
+    {
+      timer_cnt++;
+      return;
+    } 
+    else
+    {
+      timer_cnt = 0;
+    }
+    // there is a dirty byte on first send.
+    sprintf(buffer, "ignore me");    
+    serial_send((uint8_t *)buffer, strlen(buffer));    
 #ifdef USE_HDC1080_MODE_1
     uint16_t temp,humi;
     HDC1080_Read_Temperature_and_Humidity(&temp, &humi);
-    sprintf(buffer, "HDC1080_Read_Temperature = %d , HDC1080_Read_Humidity = %d%%\n ", temp, humi);  
-    serial_send((uint8_t *)buffer, strlen(buffer)); 
+    sprintf(buffer, "HDC1080.T: %d\r\n", temp);
+    bb_send_data(buffer);
+    sprintf(buffer, "HDC1080.H: %d\r\n", humi);
+    bb_send_data(buffer);
 #else /*USE_HDC1080_MODE_1*/
     uint16_t data = 0;
     data = HDC1080_Read_Temperature();
-    sprintf(buffer, "HDC1080_Read_Temperature = %d\n ", data);  
-    serial_send((uint8_t *)buffer, strlen(buffer));     
-
+    sprintf(buffer, "HDC1080.T: %d", data);  
+    bb_send_data(buffer);     
     
     data = HDC1080_Read_Humidity();
-    sprintf(buffer, "HDC1080_Read_Humidity = %d%%\n ", data);  
-    serial_send((uint8_t *)buffer, strlen(buffer));      
+    sprintf(buffer, "HDC1080.H: %d", data);  
+    bb_send_data(buffer);     
 #endif     /*USE_HDC1080_MODE_1*/
     uint8_t ccs = 0;
     
     ccs = CCS811_Read_Byte(CCS811_STATUS);
-    sprintf(buffer, "CCS811_STATUS = 0x%x\n ", ccs);  
-    serial_send((uint8_t *)buffer, strlen(buffer));    
-
-
-    
+    sprintf(buffer, "CCS.S: 0x%x\r\n", ccs);  
+    bb_send_data(buffer);    
+  
     for(tcount=0;tcount<9;tcount++){
         mc24buf[tcount] = 0;
     }
     splen = 0;
-    splen += sprintf(buffer + splen, "MC24AA02_Read_Sequential = ");
+    splen += sprintf(buffer + splen, "EEPROM.R:");
     MC24AA02_Read_Sequential(0x00, mc24buf , 8);
 
-    splen += sprintf(buffer + splen, "%s\n",mc24buf);
-    serial_send((uint8_t *)buffer, strlen(buffer));  
-
-//  SEGGER_RTT_WriteString(0, "timer_on_fired\n");	
-
-  if(0 != ble_device_is_connected()){
-    ble_device_send(1, strlen("hello\r\n"),(uint8_t *)"hello\r\n");
-  }
-
-  led_show();
+    splen += sprintf(buffer + splen, "%s\r\n",mc24buf);
+    bb_send_data(buffer);
 }
+
+
+typedef enum __SERIAL_FSM__{
+SERIAL_FSM_WAIT_HEADER_0 = 0,
+SERIAL_FSM_WAIT_HEADER_1,
+SERIAL_FSM_WAIT_DATA_LEN,
+SERIAL_FSM_WAIT_DATA
+}serial_fsm_e;
+
+static serial_fsm_e serial_fsm = SERIAL_FSM_WAIT_HEADER_0;
+static char serial_buffer[128];
+static uint8_t serial_buffer_index = 0;
+static uint8_t serial_data_len = 0;
+
+void receive_serial_data(uint8_t data)
+{
+  if(serial_data_len > 0)
+  {
+    serial_buffer[serial_buffer_index++] = data;
+    if(0 == --serial_data_len)
+    {
+      ble_device_send(1, serial_buffer_index,(uint8_t *)serial_buffer);
+      serial_buffer_index = 0;
+      serial_fsm = SERIAL_FSM_WAIT_HEADER_0;
+    }
+
+    if('\n' == data)
+    {
+      serial_buffer_index = 0;
+      serial_fsm = SERIAL_FSM_WAIT_HEADER_0;
+    }
+  }
+  
+}
+
 void serial_on_data(uint8_t data)
 {
-    led_show();
+  switch(serial_fsm)
+  {
+  case SERIAL_FSM_WAIT_HEADER_0:
+    if(0xFF == data) serial_fsm = SERIAL_FSM_WAIT_HEADER_1;
+    break;
+    
+  case SERIAL_FSM_WAIT_HEADER_1:
+    if(0xAA == data) serial_fsm = SERIAL_FSM_WAIT_DATA_LEN;
+    else serial_fsm = SERIAL_FSM_WAIT_HEADER_0;
+    break;    
+
+  case SERIAL_FSM_WAIT_DATA_LEN:
+    serial_buffer_index = 0;
+    serial_data_len = data;
+    serial_fsm = SERIAL_FSM_WAIT_DATA;
+    break;  
+
+  case SERIAL_FSM_WAIT_DATA:
+    receive_serial_data(data);
+    break; 
+
+  default:
+    serial_fsm = SERIAL_FSM_WAIT_HEADER_0;
+  }
+
 }
 
 void ble_device_on_connect(void)
